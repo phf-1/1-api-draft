@@ -1,0 +1,13 @@
+{
+    "name": "@1-api-draft/api",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "devDependencies": {
+        "typescript": "^5.0.0"
+    }
+}

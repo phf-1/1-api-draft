@@ -1,0 +1,355 @@
+* README
+This section introduces the project, its objectives, how to install, configure, and
+use the project, how closely the implementation satisfies those objectives, its main
+components, and the implementation plan. This content is updated based on the
+feedback it receives.
+
+** Introduction
+There is a need to implement an API using an Express server. This project aims to
+address this need.
+
+The /Installation/ section describes how to install the project.
+
+The /Configuration/ section describes how to configure the project.
+
+The /Quick start/ section describes how to use the project in a nutshell.
+
+The /Reference/ section describes how to use the project.
+
+The /Compliance/ section refines the objective and evaluates how close we are to
+answering that need.
+
+The /Plan/ section describes a path of milestones to bring the implementation closer to
+satisfying the objective.
+
+The /Specification/ section describes what the code is supposed to implement.
+
+The /Contributing/ section describes how to update the project.
+
+The [[file:src/][src/]] directory contains all the source files.
+
+The [[file:test/][test/]] directory contains all the test files.
+
+The [[file:Makefile][Makefile]] automates various operations like executing tests or starting a server.
+
+Other files are standard and should be self-explanatory.
+
+** Installation
+This section describes how to install the project on a given system.
+
+** Configuration
+Assuming that the project has been installed, this section describes how to configure
+the project on a given system.
+
+** Quick start
+Assuming that the project is configured, this section describes how to use it.
+
+Assume that the objective is to define an endpoint:
+
+#+begin_example
+GET https://localhost/api/v1/hello
+#+end_example
+
+such that it replies with the JSON ~{"message": "world"}~. The following code is
+sufficient to define an Express server:
+
+#+begin_src typescript
+import type { Express } from 'express';
+import express from 'express';
+import { z } from 'zod';
+import Api from '@1-api-draft/api';
+
+const apiSpec = [
+    [1, 'get', '/hello',                            // GET /api/v1/hello
+     {
+        handler: () => ({ message: 'world' }),      // computes the response
+        response: z.object({ message: z.string() }) // schema used to validate the response
+    }
+    ],
+];
+
+const api = Api.fromSpec(apiSpec);
+const app = express();
+app.use(express.json());
+api.install(app);
+app.listen(3000);
+#+end_src
+
+A full EndpointSpec would look like:
+
+#+begin_src typescript
+[version, method, path,                                  // method /api/v${version}${path}
+ {
+    body,                                                // Zod schema to validate the body
+    params,                                              // Zod schema to validate the params
+    query,                                               // Zod schema to validate the query
+    handler: ({body, params, query, ... }) => ({ ... }), // computes the response value (inputs may be extended)
+    response                                             // Zod schema to validate the response value
+    // ...                                               // Other fields may be added to extend the spec
+ }
+]
+#+end_src
+
+If the incoming request body, path parameters, or query parameters do not match their
+corresponding Zod schemas, the server automatically responds with a 400 status code
+and a clear error message for the client.
+
+If the handler's returned value does not conform to the specified response schema,
+the server responds with a 500 status code and logs an appropriate error for
+debugging.
+
+To extend the API, simply add more endpoint specifications (i.e., additional rows
+like the one above) to the ~apiSpec~ array. Multiple versions of the API may freely
+coexist:
+
+#+begin_src typescript
+const apiSpecV1 = [
+    [1, …],
+    [1, …],
+    [1, …],
+]
+
+const apiSpecV2 = [
+    [2, …],
+    [2, …],
+    [2, …],
+]
+
+const apiSpec = apiSpecV1.concat(apiSpecV2)
+#+end_src
+
+More generally, building an `apiSpec` consists of manipulating arrays. This approach
+offers numerous ways to slice, combine, and transform endpoint specifications,
+thereby providing flexibility, scalability (routes can be generated
+programmatically), and maintainability (every row follows an identical structure with
+clearly defined components).
+
+** TODO Live example
+** TODO Reference
+OpenAPI doc
+** Compliance
+This section describes the objective that this project should meet, discusses how
+close the project is to meeting the objective, and concludes whether or not the
+project is satisfactory.
+
+*** Objective
+This section describes what it means for the project to be "satisfactory".
+
+This project aims at the design and development of a REST Web API hosted on an
+Express.js environment. The compliance of the solution will be evaluated according to
+these points of view: Client, Server, Administration, and Developer.
+
+The /Client/ point of view refers to the integration of the API by a third-party
+developer into their application. The client experience will be considered
+satisfactory if the documentation is exhaustive, concise, and covers both success and
+error handling. For a given version, the API will guarantee strict immutability.
+
+The /Server/ point of view concerns the implementation of the API within the Express.js
+environment. In addition to meeting the criteria identical to the Client point of
+view, the server implementation must ensure rigorous validation of requests,
+authentication of access, as well as rate limiting.
+
+The /Admin/ point of view addresses supervision needs. The API must allow the
+monitoring of strategic KPIs (e.g., call volume over a sliding window of 6 months)
+via the emission of structured logs, usable by third-party analysis platforms. It is
+appropriate to anticipate, from the design stage, that these logs are intended to be
+exposed to the end users of the API in a future iteration.
+
+The /Developer/ point of view focuses on implementation requirements, ensuring the API
+is straightforward for developers to maintain and extend. To achieve trivial
+maintenance, the API must satisfy these conditions: minimal learning curve, compact,
+modular and consistent codebase, comprehensive integrated documentation, robust
+assertions, clear and well-chosen tests, and designed to be extended.
+
+*** Artifact
+This section provides the artifact or a link to the artifact that is intended to meet
+the objective.
+
+The API candidate implementation is accessible here:
+https://github.com/phf-1/1-api-draft
+
+*** Discussion
+This section discusses how close the artifact is to meeting the objective.
+
+** Plan
+This section describes milestones that should bring the project towards its
+objective. The milestones are given top to bottom in order. A milestone may be in the
+following states: TODO, DOING, WAITING or DONE. "WAITING" means that a question has
+been asked and we are waiting for an answer before being able to move forward. A
+milestone may have a deadline. A milestone is represented by a sub-heading like so:
+
+#+begin_src org
+,* TODO Name of the milestone
+DEADLINE: <2025-11-27 Thu>
+Description of what should be done followed by arbitrary content, if any.
+#+end_src
+
+Note that a milestone may contain other milestones. For instance, if a milestone A
+should be split into finer steps, then it may contain milestones B and C, which is
+represented as:
+
+#+begin_src org
+,* TODO A
+,** TODO B
+,** TODO C
+#+end_src
+
+** Specification
+This section describes the abstract /concepts/ that the code should implement. Each
+concept is defined within a dedicated subsection: the subsection's title is the
+/concept's name/, and its content provides the /definition/. For instance:
+
+#+begin_src org
+,* Point
+Given x, y : Integer, p :≡ Point#mk(x y) is a Point with coordinates x and y. p#x is
+its x-coordinate and p#y is its y-coordinate.
+
+,* Segment
+Given two points p1 and p2, s :≡ Segment#mk(p1 p2) is a Segment with starting point
+p1 and ending point p2. s#start ≡ p1 and s#end ≡ p2.
+#+end_src
+
+These definitions aim to be /abstract enough/ to facilitate reasoning and verification
+without reference to a specific programming language, yet they are precise enough to
+form a non-executable blueprint for the concrete code implementation. Concepts are
+given in /order/, top to bottom. A given concept cannot invoke another one that comes
+after itself. We do not aim for perfect rigor—just enough to sketch the
+implementation. The level of detail is to be adjusted based on feedback, if any.
+
+*** Type
+A /type/ may be viewed as a set of values. To define a type, we provide ways to define
+such values (if any) and how to use them. Another way to view a type is as a
+/specification/, /i.e./ some piece of data x is of type X iff it satisfies the conditions
+to be an X; in short, we say that "x matches X". A variant is "X checks x" to mean
+that if x does not match X then, "X checks x" fails which may be interpreted as
+raising an exception when viewed from a programming perspective. A few types of
+values are left implicit /e.g./ Undefined, ℕ.
+
+*** A → B
+Given A, B, and some algorithm algo such that, given a : A, algo(a) : B, then
+algo : A → B. In other words, A → B may be viewed as the set of algorithms that build
+instances of B from instances of A. We use the usual λ notation to define the
+algorithms. The usual conventions apply for A B … → Z, for instance.
+
+The notion of an algorithm is extended to allow failures. When we mean to take into
+account the fact that an algorithm may fail, it is enclosed in a try/catch block, for
+instance try { algo(a) } catch { b }. algo(a) is returned if it succeeds; otherwise,
+b is returned. This helps bridge the gap with implementation considerations.
+
+*** A × B
+Given a : A and b : B, we denote p : A × B :≡ <a,b> as a pair formed by an element of A
+and an element of B. If unambiguous, accessors are defined by the names of the
+corresponding types. For instance, p#A :≡ a and p#B :≡ b. We extend this idea to an
+arbitrary number of types /i.e./ A × B × … × Z.
+
+*** A + B
+Given a : A and b : B, we denote that a term is either an instance of A or an instance
+of B by stating c : A + B. We write left(a) : A + B or right(b) : A + B. If
+unambiguous, we simply write a : A + B and b : A + B. This idea is extended to an
+arbitrary number of types /e.g./ A + B + … + Z.
+
+*** Maybe(X)
+Maybe(X) :≡ Undefined + X
+
+*** Path
+A /Path/ is the path component of a URI.
+
+*** Data
+Data :≡ Undefined + Object
+
+*** Version
+Version :≡ ℕ
+
+*** Method
+Method :≡ GET + POST
+
+*** Uri
+See: [[https://fr.wikipedia.org/wiki/Sch%C3%A9ma_d%27URI][URI (Wikipedia)]]
+
+User :≡ Name × Password
+
+Authority :≡ User × Domain
+
+Uri :≡ Schema × Authority × Port × Path × Query × Fragment
+
+Note that the term "Request" is replaced by "Query" to avoid ambiguities with the
+express request object received by middlewares.
+
+*** Endpoint
+Endpoint :≡ Version × Method × Path
+
+*** InputType
+Given body, params, query : Type, then i : InputType :≡ <body,params,query>. Given
+i : InputType, then i#body :≡ body, i#params :≡ params, i#query :≡ query. For any
+objects b, p and r, i#check(b p r) iff body matches b and params matches p and query
+matches q.
+
+*** Contract
+Contract :≡ Endpoint × InputType × OutputType. Given c1, c2 : Contract, c1 = c2 iff
+they have identical endpoints.
+
+*** Procedure
+Body :≡ Any
+
+Query :≡ Any
+
+Params :≡ Any
+
+Procedure :≡ Body Params Query → Any
+
+*** Resolver
+Resolver :≡ Endpoint × Procedure. Given r1, r2 : Resolver, r1 = r2 iff r1#Endpoint =
+r2#Endpoint.
+
+*** Rule
+Rule :≡ (con : Contract) × (res : Resolver) such that con#Endpoint = res#Endpoint.
+Given r : Rule, r#Endpoint :≡ con#Endpoint. Given r : Rule, r#Procedure :≡
+r#Resolver#Procedure.
+
+*** Api
+Let contracts : Set(Contract), resolvers : Set(Resolver), then api : Api :≡
+Api#mk(contracts resolvers). Internally, api builds a set of rules by matching
+contracts and resolvers on their endpoints. Given an Express server /svr/,
+/api#install(svr)/ installs all rules on svr. It means the following:
+
+- Let r be a request of the form: <method, /api/version + path, body, params, query>.
+- Let endpoint :≡ <version, method, path>.
+- If there is no rule ∈ rules such that rule#Endpoint = endpoint, then svr falls back
+  to its default behavior.
+- try { rule#InputType#check(body params query) } catch { svr returns an error }
+- reply :≡ try { rule#Procedure(body params query) } catch { svr returns an error }.
+- try { rule#OutputType#check(reply) } catch { svr returns an error }
+- svr returns reply.
+
+*** EndpointSpec
+EndpointSpec :≡ Version × Method × Path × BodyType × ParamsType × QueryType × Procedure × OutputType
+
+*** ApiSpec
+ApiSpec :≡ List(EndpointSpec)
+
+*** Api#fromSpec
+Api#fromSpec : ApiSpec → Api. Given an ApiSpec spec, we build a set of contracts and
+a set of resolvers from each EndpointSpec, then we invoke Api#mk(contracts resolvers)
+which gives the Api. By construction, the operation fails if duplicated EndpointSpec
+are provided.
+
+** Contributing
+See: [[https://phfrohring.com/article/7/html][ExoCode]]
+
+** Message
+This section lists notworthy pieces of conversations that may be used in a way or an
+other move the project forward. Conversations are recorded top to bottom, from the
+most recent to the oldest. A conversation is represented like so:
+
+#+begin_src org
+,* Title
+Content
+#+end_src
+
+*** Spec v1
+See: [[file:resource/partner-api-draft-1.md][partner-api-draft-1.md]]
+
+* Local Variables
+Local Variables:
+eval: (add-hook 'before-save-hook #'whitespace-cleanup nil t)
+End:
